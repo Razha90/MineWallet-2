@@ -19,28 +19,14 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @var list<string>
      */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'phone',
-        'address',
-        'pin',
-        'role',
-        'phone',
-        'avatar',
-        'saldo',
-    ];
+    protected $fillable = ['name', 'email', 'password', 'phone', 'address', 'pin', 'role', 'phone', 'avatar', 'saldo'];
 
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>
      */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden = ['password', 'remember_token'];
 
     /**
      * Get the attributes that should be cast.
@@ -65,14 +51,21 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function initials(): string
     {
-        return Str::of($this->name)
-            ->explode(' ')
-            ->map(fn (string $name) => Str::of($name)->substr(0, 1))
-            ->implode('');
+        return Str::of($this->name)->explode(' ')->map(fn(string $name) => Str::of($name)->substr(0, 1))->implode('');
     }
 
     public function topups()
     {
         return $this->hasMany(TopUp::class, 'user_id');
+    }
+
+    public function transfers()
+    {
+        return $this->hasMany(Transfer::class, 'sender_id');
+    }
+
+    public function receivedTransfers()
+    {
+        return $this->hasMany(Transfer::class, 'receiver_id');
     }
 }

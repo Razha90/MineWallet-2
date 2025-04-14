@@ -12,6 +12,7 @@ class Bank extends Model
         'name',
         'account_number',
         'account_name',
+        'admin',
         'image',
         'type',
     ];
@@ -24,5 +25,10 @@ class Bank extends Model
     public function topups()
     {
         return $this->hasMany(TopUp::class, 'bank_id');
+    }
+
+    public function transfers()
+    {
+        return $this->hasMany(Transfer::class, 'bank_id');
     }
 }

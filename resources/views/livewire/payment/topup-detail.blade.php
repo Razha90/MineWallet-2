@@ -50,8 +50,8 @@ new #[Layout('components.layouts.homepage')] class extends Component {
         <!-- Info Table -->
         <div class="space-y-2 text-sm">
             <div class="flex justify-between border-b pb-1">
-                <span class="text-gray-500">Tanggal Top Up</span>
-                <span>{{ $topup->created_at->format('M d, Y') }}</span>
+                <span class="text-gray-500">Waktu Pengisian</span>
+                <span>{{ $topup->created_at->format('M d, Y H:i:s') }}</span>
             </div>
             <div class="flex justify-between border-b pb-1">
                 <span class="text-gray-500">Nama Pengguna</span>

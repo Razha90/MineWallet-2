@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('account_name')->nullable();
             $table->string(column: 'image')->nullable();
             $table->string('type');
+            $table->string('admin')->nullable();
             $table->timestamps();
         });
     }

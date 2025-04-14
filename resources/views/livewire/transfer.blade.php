@@ -1,129 +1,156 @@
 <?php
- 
+
 use Livewire\Volt\Component;
 use Livewire\Attributes\Layout;
- 
+use App\Models\Bank;
+
 new #[Layout('components.layouts.homepage')] class extends Component {
     public $user;
-    public $amount = 0; // ← TAMBAHKAN INI
- 
+    public $amount = 0;
+    public $banks;
+
     public function mount()
     {
-        $this->user = auth()->user();
+        $this->getBanks();
     }
- 
+
     public function lanjutkan()
     {
         $this->validate([
             'amount' => 'required|numeric|min:10000',
         ]);
- 
+
         session(['transfer_amount' => $this->amount]);
- 
+
         return redirect()->to('/konfirmasi-transfer');
+    }
+
+    public function getBanks()
+    {
+        $this->banks = Bank::all()->toArray();
+    }
+
+    public function searchUser($name) {
+        $this->users = User::where('name', 'like', '%' . $name . '%')->get()->toArray();
     }
 };
 ?>
- 
-<div>
-    <div class="bg-purple-600 min-h-screen pt-6 pb-10 px-4">
+
+<div class="w-full" x-data="initTransfer" x-init="console.log(banks)">
+    <div class="mx-auto min-h-screen max-w-lg bg-purple-600 px-4 pb-10 pt-6">
         <!-- Header -->
-        <div class="text-center text-lg font-semibold text-white-800 mb-4">Kirim Uang</div>
- 
+        <div class="text-white-800 mb-4 text-center text-lg font-semibold">Kirim Uang</div>
+
         <!-- Kirim Cepat -->
-        <div class="bg-white rounded-xl shadow p-4 mb-4 text-black">
-            <label class="text-sm text-gray-600 font-medium mb-2 block">Kirim Cepat</label>
- 
-            <input type="text" placeholder="Cari kontak, akun bank, atau grup"
-                class="w-full border border-gray-800 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
- 
+        <div class="mb-4 rounded-xl bg-white p-4 text-black shadow">
+            <label class="mb-2 block text-sm font-medium text-gray-600">Kirim Cepat</label>
+
+            <template x-if="bank == same_user">
+                <div class="relative">
+                    <input x-model.debounce.500ms="same" placeholder="Cari pengguna"
+                        class="w-full rounded-full border border-gray-800 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <template class="x">
+                        <div>
+
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <template x-if="banks.some(value => value.id == bank)">
+                <div>
+                    <input type="text" placeholder="Cari kontak, akun bank, atau grup"
+                        class="w-full rounded-full border border-gray-800 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+            </template>
+
             <!-- Kontak Cepat -->
-            <div class="grid grid-cols-4 gap-4 mt-4 text-center text-xs text-gray-700">
-                <div class="flex flex-col items-center">
-                    <img src="https://i.pravatar.cc/100?img=1" class="rounded-full w-12 h-12">
-                    <span class="mt-1 truncate">BCA Chris</span>
+            <div class="mt-4 flex flex-row flex-wrap gap-3">
+                <div class="animate-fade flex flex-row gap-2 rounded-xl border p-2"
+                    :class="{ 'border-blue-400 bg-blue-200': bank == '10' }" @click="bank = same_user">Sesama Pengguna
                 </div>
-                <div class="flex flex-col items-center">
-                    <img src="https://i.pravatar.cc/100?img=2" class="rounded-full w-12 h-12">
-                    <span class="mt-1 truncate">Risa Mandiri</span>
-                </div>
-                <div class="flex flex-col items-center">
-                    <img src="https://i.pravatar.cc/100?img=3" class="rounded-full w-12 h-12">
-                    <span class="mt-1 truncate">Jevon Jago</span>
-                </div>
-                <div class="flex flex-col items-center">
-                    <div class="bg-gray-300 rounded-full w-12 h-12 flex items-center justify-center text-white text-sm">
-                        +</div>
-                    <span class="mt-1 truncate">Tambah</span>
-                </div>
+                <template x-for="(item, index) in banks" :key="index">
+                    <div @click="bank = item.id"
+                        class="animate-fade flex flex-row items-center justify-center gap-2 rounded-xl border p-2"
+                        :class="{ 'border-blue-400 bg-blue-200': item.id == bank }">
+                        <img :src="item.image" alt="Logo Bank" class="w-[50px]">
+                        <p x-text="item.name"></p>
+                    </div>
+                </template>
             </div>
- 
+
             <!-- Form Nominal -->
-<div class="bg-white rounded-xl shadow p-4 mt-4 text-gray-800">
-    <label for="amount" class="block text-sm font-semibold text-gray-700 mb-2">Masukkan Nominal Transfer</label>
- 
-    <!-- Input Manual -->
-    <div class="relative mb-2">
-        <span class="absolute left-3 top-3 text-gray-500 text-sm">Rp</span>
-        <input wire:model="amount" type="number" id="amount" min="10000" step="1000"
-            class="pl-10 w-full border-b-2 border-purple-500 text-lg py-2 focus:outline-none focus:border-purple-600"
-            placeholder="0">
-    </div>
- 
-    @error('amount')
-        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-    @enderror
- 
-    <!-- Saldo Aktif -->
-    <div class="text-sm text-gray-500 mt-1">
-        Saldo Aktif:
-        <span class="text-purple-600 font-semibold">Rp {{ number_format(auth()->user()->balance, 0, ',', '.') }}</span>
-    </div>
- 
-    <!-- Instant Nominal -->
-    <div class="mt-4">
-        <p class="font-medium mb-2 text-sm">Instant</p>
-        <div class="grid grid-cols-3 gap-2">
-            @foreach ([20000, 50000, 100000, 200000, 500000] as $nom)
-                <button type="button"
-                    wire:click="$set('amount', {{ $nom }})"
-                    class="border text-sm rounded-full px-3 py-2 transition text-center
-                    {{ $amount == $nom ? 'bg-purple-100 border-purple-400 text-purple-700 font-semibold' : 'border-gray-300 hover:bg-purple-50' }}">
-                    Rp {{ number_format($nom, 0, ',', '.') }}
+            <div class="mt-4 rounded-xl bg-white p-4 text-gray-800 shadow">
+                <label for="amount" class="mb-2 block text-sm font-semibold text-gray-700">Masukkan Nominal
+                    Transfer</label>
+
+                <!-- Input Manual -->
+                <div class="relative mb-2">
+                    <span class="absolute left-3 top-3 text-sm text-gray-500">Rp</span>
+                    <input x-model="nom" type="number" id="amount" min="10000" step="1000"
+                        class="w-full border-b-2 border-purple-500 py-2 pl-10 text-lg focus:border-purple-600 focus:outline-none"
+                        placeholder="0">
+                </div>
+
+                <!-- Saldo Aktif -->
+                <div class="mt-1 text-sm text-gray-500">
+                    Saldo Aktif:
+                    <span class="font-semibold text-purple-600">Rp
+                        {{ number_format(auth()->user()->saldo, 0, ',', '.') }}</span>
+                </div>
+
+                <!-- Instant Nominal -->
+                <div class="mt-4">
+                    <p class="mb-2 text-sm font-medium">Instant</p>
+                    <div class="grid grid-cols-3 gap-2">
+                        <template x-for="(amount, index) in amounts">
+                            <button type="button" @click="nom = amount" class="cursor-pointer border-2 transition-all"
+                                :class="{
+                                    'bg-purple-100 border-purple-400 text-purple-700 rounded-full font-semibold': nom ==
+                                        amount,
+                                    'border-gray-300 hover:bg-purple-50 rounded-full border px-3 py-2 text-center text-sm transition': nom !=
+                                        amount
+                                }">
+                                <span x-text="formatRupiah(amount)"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Tombol Lanjutkan -->
+                <button wire:click="lanjutkan"
+                    class="mt-6 w-full rounded-full bg-purple-600 py-2 text-sm font-semibold text-white transition hover:bg-purple-700">
+                    Lanjutkan Transfer
                 </button>
-            @endforeach
-        </div>
-    </div>
- 
-    <!-- Tombol Lanjutkan -->
-    <button wire:click="lanjutkan"
-        class="w-full mt-6 bg-purple-600 text-white py-2 rounded-full text-sm font-semibold hover:bg-purple-700 transition">
-        Lanjutkan Transfer
-    </button>
-</div>
- 
- 
-        </div>
- 
-        <!-- Menu Transfer
-        <div class="bg-white rounded-xl shadow p-4">
-            <div class="grid grid-cols-3 gap-4 text-center text-xs">
-                <div class="flex flex-col items-center hover:bg-purple-100 p-3 rounded-xl transition">
-                    <i class="bi bi-person-fill text-2xl text-blue-500 mb-2"></i>
-                    <span class="text-xs text-gray-700">Kirim ke Sesama</span>
-                </div>
-                <div class="flex flex-col items-center hover:bg-purple-100 p-3 rounded-xl transition">
-                    <i class="bi bi-bank2 text-2xl text-orange-500 mb-2"></i>
-                    <span class="text-xs text-gray-700">Kirim ke Bank</span>
-                </div>
-                <div class="flex flex-col items-center hover:bg-purple-100 p-3 rounded-xl transition">
-                    <i class="bi bi-chat-dots-fill text-2xl text-green-500 mb-2"></i>
-                    <span class="text-xs text-gray-700">Kirim ke Chat</span>
-                </div>
             </div>
-        </div> -->
- 
- 
- 
+        </div>
     </div>
 </div>
+<script>
+    function initTransfer() {
+        return {
+            banks: @entangle('banks').live,
+            bank: "",
+            nom: 0,
+            amounts: [10000, 20000, 25000, 50000, 100000, 500000, 1000000, 2000000],
+            formatRupiah(angka) {
+                return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            },
+            same_user: '10',
+            initStop: false,
+            same: '',
+            initSame() {
+                if (this.initStop) {
+                    return;
+                }
+                this.initStop = true;
+                this.$watch('same', (value) => {
+                    if (value.length > 0) {
+                        this.$wire.searchUser(value);
+                    }
+                });
+            },
+
+        }
+    }
+</script>
