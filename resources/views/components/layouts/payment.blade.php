@@ -14,9 +14,8 @@
 </head>
 
 <body class="bg-white">
-    <livewire:component.header />
+    <livewire:component.header-payment />
     {{ $slot }}
-    <livewire:component.nav />
     <livewire:component.notifacation />
     @fluxScripts
     <div x-cloak x-data="{ alert: false, message: '' }"

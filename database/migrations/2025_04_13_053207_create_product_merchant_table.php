@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('product_merchant', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['product', 'service']);
+            $table->string('type');
+            $table->string(column: 'sub_type');
             $table->string('name');
+            $table->string('discount')->nullable();
             $table->string('description')->nullable();
             $table->string('image')->nullable();
             $table->string('price')->nullable();

@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -15,12 +14,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId(column: 'product_id')->constrained('product_merchant');
             $table->foreignId(column: 'user_id')->constrained('users');
-            $table->enum('type', ['product', 'service']);
+            $table->string('type');
+            $table->string('sub_type');
             $table->string('service_name')->nullable();
             $table->string('prize')->nullable();
             $table->string('quantity')->nullable();
             $table->string('total')->nullable();
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->enum('status', ['waiting', 'pending', 'approved', 'rejected'])->default('waiting');
             $table->timestamp('approved_at')->nullable();
             $table->timestamp('rejected_at')->nullable();
             $table->timestamps();

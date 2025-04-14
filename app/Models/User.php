@@ -23,6 +23,13 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'password',
+        'phone',
+        'address',
+        'pin',
+        'role',
+        'phone',
+        'avatar',
+        'saldo',
     ];
 
     /**
@@ -48,6 +55,11 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'user_id');
+    }
+
     /**
      * Get the user's initials
      */
@@ -57,5 +69,10 @@ class User extends Authenticatable implements MustVerifyEmail
             ->explode(' ')
             ->map(fn (string $name) => Str::of($name)->substr(0, 1))
             ->implode('');
+    }
+
+    public function topups()
+    {
+        return $this->hasMany(TopUp::class, 'user_id');
     }
 }
