@@ -12,11 +12,13 @@ return new class extends Migration {
     {
         Schema::create('transfer', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignId('bank_id')->constrained('bank');
+            $table->foreignId('bank_id')->nullable()->constrained('bank');
             $table->foreignId('sender_id')->constrained('users');
-            $table->foreignId('receiver_id')->nullable()->constrained('users');
+            $table->string('receiver_id')->nullable();
             $table->string('amount');
             $table->string(column: 'phone')->nullable();
+            $table->enum('status', ['waiting', 'pending', 'approved', 'failed'])->default('waiting');
+            $table->string('image')->nullable();
             $table->timestamps();
         });
     }

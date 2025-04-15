@@ -1,17 +1,17 @@
 <?php
-
+ 
 use Livewire\Volt\Component;
 use Livewire\Attributes\Layout;
 use App\Models\Topup;
 use App\Models\User;
-use App\Notifications\TopUpNotification;
+use App\Notifications\TopUpMailNotification;
 new #[Layout('components.layouts.admin')] class extends Component {
     public $topups;
     public function mount()
     {
         $this->getTopUp();
     }
-
+ 
     public function getTopUp()
     {
         $this->topups = Topup::with(['user', 'bank'])
@@ -20,38 +20,38 @@ new #[Layout('components.layouts.admin')] class extends Component {
             ->get()
             ->toArray();
     }
-
+ 
     public function approved($id)
     {
         $topup = Topup::find($id);
         if ($topup) {
             $topup->status = 'success';
             $topup->save();
-
+ 
             $user = User::find($topup->user_id);
             $user->saldo += $topup->amount;
             $user->save();
-
-            $user->notify(new TopUpNotification('<h1>Top Up Berhasil Disetujui</h1><p>Top up kamu sebesar Rp ' . number_format($topup->amount, 0, ',', '.') . ' telah disetujui.</p>', $topup->id));
-
+ 
+            $user->notify(new TopUpMailNotification('<h1>Top Up Berhasil Disetujui</h1><p>Top up kamu sebesar Rp ' . number_format($topup->amount, 0, ',', '.') . ' telah disetujui.</p>', $topup->id, $topup->amount));
+ 
             $this->getTopUp();
         }
     }
-
+ 
     public function rejected($id)
     {
         $topup = Topup::find($id);
         if ($topup) {
             $topup->status = 'failed';
             $topup->save();
-
+ 
             $user = User::find($topup->user_id);
-            $user->notify(new TopUpNotification('<h1>Top Up Gagal</h1><p>Top up kamu sebesar Rp ' . number_format($topup->amount, 0, ',', '.') . ' gagal.</p>', $topup->id));
-
+            $user->notify(new TopUpMailNotification('<h1>Top Up Gagal</h1><p>Top up kamu sebesar Rp ' . number_format($topup->amount, 0, ',', '.') . ' gagal.</p>', $topup->id, $topup->amount));
+ 
             $this->getTopUp();
         }
     }
-
+ 
     public function deleteTopUp($id)
     {
         $topup = Topup::find($id);
@@ -61,60 +61,79 @@ new #[Layout('components.layouts.admin')] class extends Component {
         }
     }
 }; ?>
-
-<flux:main x-data="adminTopUp" x-init="init">
-    <h1 class="text-2xl font-bold text-blue-500">Top Up</h1>
-    <div class="mt-8 flex flex-col gap-y-4">
-        <template x-for="(item, index) in topups">
-            <div class="relative w-full rounded-xl border-2 p-3"
-                :class="{
-                    'bg-amber-200/20 border-amber-400 text-blue-400': item.status == 'pending',
-                    'bg-green-200/20 border-green-400 text-blue-400': item.status == 'success',
-                    'bg-red-200/20 border-red-400 text-blue-400': item.status == 'failed',
-                }">
-                <div>
-                    <p><span class="text-gray-500">Nama Pengguna:</span> <span x-text="item.user.name"></span></p>
-                    <p>Total Rp. <span x-text="formatRupiah(Number(item.amount) + Number(item.admin))"></span></p>
-                </div>
-                <template x-if="item.status == 'pending'">
-                    <div class="relative flex select-none flex-row items-center justify-center gap-4">
-                        <div @click="approved(item.id)"
-                            class="flex cursor-pointer items-center justify-center rounded-xl border-2 border-green-600 bg-green-200 p-2 text-green-600 hover:opacity-50">
-                            Approve</div>
-                        <div @click="rejected(item.id)"
-                            class="flex items-center justify-center rounded-xl border-2 border-red-600 bg-red-200 p-2 text-red-600">
-                            Rejected</div>
-
-                    </div>
+ 
+<flux:main x-data="adminTopUp" x-init="init" class="p-4">
+    <h1 class="text-2xl font-bold text-blue-600 mb-6">Top Up</h1>
+ 
+    <div class="overflow-x-auto bg-white rounded-xl shadow">
+        <table class="min-w-full text-sm text-left text-gray-700">
+            <thead class="bg-gray-100 text-xs uppercase text-gray-600">
+                <tr>
+                    <th class="px-6 py-4">User</th>
+                    <th class="px-6 py-4">Total</th>
+                    <th class="px-6 py-4">Status</th>
+                    <th class="px-6 py-4">Aksi</th>
+                    <th class="px-6 py-4">Hapus</th>
+                </tr>
+            </thead>
+            <tbody>
+                <template x-for="item in topups" :key="item.id">
+                    <tr class="border-b hover:bg-gray-50"
+                        :class="{
+                            'bg-yellow-50': item.status == 'pending',
+                            'bg-green-50': item.status == 'success',
+                            'bg-red-50': item.status == 'failed',
+                        }">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="font-medium text-gray-900" x-text="item.user.name"></div>
+                            <div class="text-xs text-gray-400" x-text="item.user.email"></div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            Rp <span x-text="formatRupiah(Number(item.amount) + Number(item.admin))"></span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span
+                                class="px-3 py-1 rounded-full text-xs font-semibold"
+                                :class="{
+                                    'bg-yellow-100 text-yellow-800': item.status == 'pending',
+                                    'bg-green-100 text-green-800': item.status == 'success',
+                                    'bg-red-100 text-red-800': item.status == 'failed',
+                                }"
+                                x-text="item.status.charAt(0).toUpperCase() + item.status.slice(1)"
+                            ></span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <template x-if="item.status == 'pending'">
+                                <div class="flex gap-2">
+                                    <button @click="approved(item.id)"
+                                        class="bg-green-500 hover:bg-green-600 text-white text-xs font-medium px-3 py-1 rounded-lg">
+                                        Approve
+                                    </button>
+                                    <button @click="rejected(item.id)"
+                                        class="bg-red-500 hover:bg-red-600 text-white text-xs font-medium px-3 py-1 rounded-lg">
+                                        Reject
+                                    </button>
+                                </div>
+                            </template>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <button @click="deleteTopUp(item.id)">
+                                <svg class="w-5 h-5 text-red-500 hover:text-red-700" fill="currentColor"
+                                    viewBox="0 0 20 20">
+                                    <path
+                                        d="M6 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 112 0v6a1 1 0 11-2 0V8zM4 5h12v1H4V5zm3-2a1 1 0 00-1 1v1h8V4a1 1 0 00-1-1H7z" />
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
                 </template>
-                <div class="absolute right-0 top-0" @click="deleteTopUp(item.id)">
-                    <svg class="w-[15px] cursor-pointer text-red-500" viewBox="0 -0.5 21 21" version="1.1"
-                        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-                        fill="currentColor">
-                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round">
-                        </g>
-                        <g id="SVGRepo_iconCarrier">
-                            <title>delete [#1487]</title>
-                            <desc>Created with Sketch.</desc>
-                            <defs> </defs>
-                            <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                                <g id="Dribbble-Light-Preview" transform="translate(-179.000000, -360.000000)"
-                                    fill="currentColor">
-                                    <g id="icons" transform="translate(56.000000, 160.000000)">
-                                        <path
-                                            d="M130.35,216 L132.45,216 L132.45,208 L130.35,208 L130.35,216 Z M134.55,216 L136.65,216 L136.65,208 L134.55,208 L134.55,216 Z M128.25,218 L138.75,218 L138.75,206 L128.25,206 L128.25,218 Z M130.35,204 L136.65,204 L136.65,202 L130.35,202 L130.35,204 Z M138.75,204 L138.75,200 L128.25,200 L128.25,204 L123,204 L123,206 L126.15,206 L126.15,220 L140.85,220 L140.85,206 L144,206 L144,204 L138.75,204 Z"
-                                            id="delete-[#1487]"> </path>
-                                    </g>
-                                </g>
-                            </g>
-                        </g>
-                    </svg>
-                </div>
-            </div>
-        </template>
+            </tbody>
+        </table>
     </div>
+ 
+    <p class="mt-4 text-sm text-gray-500">Menampilkan <span x-text="topups.length"></span> data top up.</p>
 </flux:main>
+ 
 <script>
     function adminTopUp() {
         return {

@@ -5,6 +5,10 @@ use Livewire\Attributes\Layout;
 use App\Models\Transaction;
 use App\Models\TopUp;
 use Illuminate\Support\Facades\Log;
+use App\Notifications\TransferNotification;
+use App\Notifications\TransferMailNotification;
+use App\Models\Transfer;
+use App\Models\User;
 use App\Notifications\TopUpNotification;
 
 new #[Layout('components.layouts.payment')] class extends Component {
@@ -34,11 +38,63 @@ new #[Layout('components.layouts.payment')] class extends Component {
                     ]);
                     $topup->save();
                     $this->dispatch('success', ['message' => 'Berhasil Melakukan Pembayaran']);
-                    auth()->user()->notify(new TopUpNotification('<h1>Silakan Lakukan Pembayaran</h1>  <p>Lakukan Pembayaran untuk merakasa kepuasaan menggunakan MineWallet</p>', $topup->id));
+                    auth()
+                        ->user()
+                        ->notify(new TopUpNotification('<h1>Silakan Lakukan Pembayaran</h1>  <p>Lakukan Pembayaran untuk merakasa kepuasaan menggunakan MineWallet</p>', $topup->id));
                     redirect()->route('detail.topup', ['id' => $topup->id]);
                     return ['con' => true];
                 } else {
                     $this->dispatch('failed', ['message' => 'Top Up tidak ditemukan']);
+                    $this->dispatch('cooler');
+                    return ['con' => false];
+                }
+            }
+
+            if ($this->type == 'TRANSFER') {
+                $transfer = Transfer::with(['sender', 'bank'])
+                    ->where('id', $this->id)
+                    ->first();
+                if ($transfer) {
+                    if ($transfer->bank) {
+                        $transfer->update([
+                            'status' => 'pending',
+                        ]);
+                        $transfer->save();
+                        $this->dispatch('success', ['message' => 'Berhasil Melakukan Pembayaran']);
+                        auth()
+                            ->user()
+                            ->notify(new TransferNotification('<h1>Proses Transfer Kamu Akan Diproses</h1>  <p>Terima Kasih telah mempercayai kami, proses trasfer kamu sedang dalam antrian dan akan segera diproses.</p>', $transfer->id));
+                        redirect()->route('detail.transfer', ['id' => $transfer->id]);
+                    } else {
+                        $user_received = User::find($transfer->sender_id)->first();
+                        if ($user_received) {
+                            $user_received->saldo += $transfer->amount;
+                            $user_received->save();
+                            $user_received->notify(new TransferMailNotification('<h1>Transfer Berhasil</h1>  <p>Transfer kamu sebesar Rp ' . number_format($transfer->amount, 0, ',', '.') . ' telah berhasil.</p>', $transfer->id, $transfer->amount));
+
+                            $my_user = auth()->user();
+                            $my_user->saldo -= $transfer->amount;
+                            $my_user->save();
+                            $my_user->notify(new TransferMailNotification('<h1>Transfer Berhasil</h1>  <p>Transfer kamu sebesar Rp ' . number_format($transfer->amount, 0, ',', '.') . ' telah berhasil.</p>', $transfer->id, $transfer->amount));
+                            $transfer->update([
+                                'status' => 'approved',
+                            ]);
+                            $transfer->save();
+                            $this->dispatch('success', ['message' => 'Berhasil Melakukan Pembayaran']);
+                            redirect()->route('detail.transfer', ['id' => $transfer->id]);
+                        } else {
+                            $transfer->update([
+                                'status' => 'failed',
+                            ]);
+                            $transfer->save();
+                            $this->dispatch('failed', ['message' => 'Transfer Gagal']);
+                            redirect()->route('detail.transfer', ['id' => $transfer->id]);
+                        }
+                    }
+
+                    return ['con' => true];
+                } else {
+                    $this->dispatch('failed', ['message' => 'Transfer tidak ditemukan']);
                     $this->dispatch('cooler');
                     return ['con' => false];
                 }

@@ -24,7 +24,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Volt::route('/topup', 'topup')->name('topup');
     Volt::route('/transfer', 'transfer')->name('transfer');
     Volt::route('/create-pin', 'payment/create-pin')->name('payment.create-pin');
+    Volt::route('/topup/{id}', 'payment.topup-detail')->name('detail.topup');
+    Volt::route('/transfer/{id}', 'payment.transfer-detail')->name('detail.transfer');
+    Volt::route('/transaction/{id}','payment.transaction-detail')->name('detail.transaction');
+    Volt::route('/pulsa', 'pulsa')->name('pulsa');
     
+
 
     Route::middleware([App\Http\Middleware\PinMiddleware::class])->group(function () {
         // Volt::route('/payment-gateway', 'admin/topup')->name('admin.topup');
@@ -32,10 +37,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Volt::route('/payment-gateway', 'payment.gateway')->name('payment.gateway');
         Volt::route('/payment-detail/{id}/topup', 'payment/detail-payment')->name('payment.detail-payment');
         Volt::route('/payment-detail/{id}/transaction', 'payment/detail-transaction')->name('payment.detail-transaction');
-        Volt::route('/topup/{id}', 'payment.topup-detail')->name('detail.topup');
-        Volt::route('/transaction/{id}','payment.transaction-detail')->name('detail.transaction');
+        Volt::route('/payment-detail/{id}/transfer', 'payment/detail-transfer')->name('payment.detail-transfer');
 
-        
     });
 
     Route::middleware([App\Http\Middleware\AdminMIddleware::class])->group(function () {

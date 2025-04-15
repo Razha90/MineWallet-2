@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class Transfer extends Model
 {
+    use HasUuids;
     protected $table = 'transfer';
 
     protected $fillable = [
@@ -14,6 +16,8 @@ class Transfer extends Model
         'receiver_id',
         'amount',
         'phone',
+        'status',
+        'image',
     ];
 
     public function bank()
@@ -24,10 +28,5 @@ class Transfer extends Model
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');
-    }
-
-    public function receiver()
-    {
-        return $this->belongsTo(User::class, 'receiver_id');
     }
 }

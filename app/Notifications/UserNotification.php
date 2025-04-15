@@ -63,15 +63,15 @@ class UserNotification extends Notification
     //         ->line('Thank you for using our application!');
     // }
     public function toMail(object $notifiable): MailMessage
-{
-    return (new MailMessage)
-        ->subject('Selamat Datang di MineWallet! Dompet Digital Terbaikmu Sudah Hadir!')
-        ->greeting('Hai ' . $notifiable->name . '!')
-        ->line('Selamat datang di MineWallet! Kami sangat senang kamu bergabung dengan komunitas kami.')
-        ->line('Siap untuk pengalaman bertransaksi yang lebih mudah, aman, dan penuh kejutan?')
-        ->action('Jelajahi MineWallet Sekarang!', url('/'))
-        ->line('Terima kasih telah memilih MineWallet sebagai dompet digital andalanmu. Mari mulai petualangan finansialmu bersama kami!');
-}
+    {
+        return (new MailMessage())
+            ->subject('Selamat Datang di MineWallet! Dompet Digital Terbaikmu Sudah Hadir!')
+            ->greeting('Hai ' . $notifiable->name . '!')
+            ->line('Selamat datang di MineWallet! Kami sangat senang kamu bergabung dengan komunitas kami.')
+            ->line('Siap untuk pengalaman bertransaksi yang lebih mudah, aman, dan penuh kejutan?')
+            ->action('Jelajahi MineWallet Sekarang!', url('/'))
+            ->line('Terima kasih telah memilih MineWallet sebagai dompet digital andalanmu. Mari mulai petualangan finansialmu bersama kami!');
+    }
 
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
