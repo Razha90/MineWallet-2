@@ -10,6 +10,7 @@ use App\Notifications\TransferMailNotification;
 use App\Models\Transfer;
 use App\Models\User;
 use App\Notifications\TopUpNotification;
+use App\Notifications\TransactionNotification;
 
 new #[Layout('components.layouts.payment')] class extends Component {
     public $type;
@@ -95,6 +96,34 @@ new #[Layout('components.layouts.payment')] class extends Component {
                     return ['con' => true];
                 } else {
                     $this->dispatch('failed', ['message' => 'Transfer tidak ditemukan']);
+                    $this->dispatch('cooler');
+                    return ['con' => false];
+                }
+            }
+
+            if ($this->type == 'PULSA') {
+                $transaction = Transaction::with(['user', 'product'])
+                    ->where('id', $this->id)
+                    ->first();
+                if ($transaction) {
+                    if ($transaction->prize > auth()->user()->saldo) {
+                        $this->dispatch('failed', ['message' => 'Saldo Tidak Mencukupi']);
+                        $this->dispatch('cooler');
+                        return ['con' => false];
+                    } else {
+                        $transaction->update([
+                            'status' => 'pending',
+                        ]);
+                        $transaction->save();
+
+                        auth()
+                            ->user()
+                            ->notify(new TransactionNotification('<h1>Pembelian Pulsa</h1>  <p>Kami akan segera memperoses pembelian kamu :)</p>', $transaction->id));
+
+                        redirect()->route('detail.transaction', ['id' => $transaction->id]);
+                    }
+                } else {
+                    $this->dispatch('failed', ['message' => 'Transaksi tidak ditemukan']);
                     $this->dispatch('cooler');
                     return ['con' => false];
                 }

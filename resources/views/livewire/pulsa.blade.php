@@ -19,7 +19,7 @@ new #[Layout('components.layouts.homepage')] class extends Component {
         try {
             if ($nom > auth()->user()->saldo) {
                 $this->dispatch('failed', [
-                    'message' => 'Saldo Kamu Kurang, untuk melakukan Transaksi.',
+                    'message' => 'Saldo Kamu Kurang, untuk melakukan Transaksi :).',
                 ]);
                 return;
             }
@@ -36,11 +36,12 @@ new #[Layout('components.layouts.homepage')] class extends Component {
                 'product_id' => $id,
                 'type' => 'pulsa',
                 'sub_type' => $this->pulsa[$id]['sub_type'],
-                'service_name' => $this->pulsa[$id]['name'],
                 'prize' => $nom,
+                'quantity' => 1,
+                'total' => $nom,
             ]);
 
-            return redirect()->route('payment.detail-payment', ['id' => $topup->id]);
+            return redirect()->route('payment.detail-transaction', ['id' => $product->id]);
         } catch (\Throwable $th) {
             Log::error('Error Top Up: ' . $th->getMessage());
             $this->dispatch('failed', [
@@ -106,7 +107,7 @@ new #[Layout('components.layouts.homepage')] class extends Component {
             <div class="grid grid-cols-3 gap-2">
                 <template x-for="(pulsa, index) in pulsas" :key="index">
                     <template x-if="pulsa.sub_type == type">
-                        <button type="button" @click="nom = pulsa.price"
+                        <button type="button" @click="nom = pulsa.price; chosePulsa = pulsa.id"
                             class="flex cursor-pointer flex-col items-center justify-center border-2 transition-all"
                             :class="{
                                 'bg-purple-100 border-purple-400 text-purple-700 rounded-full font-semibold': nom ==
@@ -155,7 +156,7 @@ new #[Layout('components.layouts.homepage')] class extends Component {
                 return text.replace(/\./g, '');
             },
             async sendTopup() {
-                if (this.nom > this.saldo) {
+                if (Number(this.nom) > Number(this.saldo)) {
                     this.$dispatch('failed', [{
                         message: 'Saldo Kamu Kurang, untuk melakukan Transaksi.'
                     }])
@@ -167,7 +168,7 @@ new #[Layout('components.layouts.homepage')] class extends Component {
                     }])
                     return;
                 }
-                // await this.$wire.sendTopup(this.nom, this.bankId);
+                await this.$wire.sendTopup(this.nom, this.chosePulsa);
                 return;
             },
             pisahBanks(data) {

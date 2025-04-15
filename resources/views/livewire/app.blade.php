@@ -135,15 +135,15 @@ new #[Layout('components.layouts.homepage')] class extends Component {
             <br>
             <p class="text-xl">Saldo</p>
             <h1 class="mt-1 text-3xl font-bold"><span>Rp.</span><span x-text="formatRupiah(rupiah)"></span></h1>
-            <div class="mt-4 grid grid-cols-3 gap-3">
+            <div class="mt-4 flex flex-row justify-center w-full gap-x-4">
                 <div @click="NProgress.start(); window.location = '/topup'; NProgress.done();"
-                    class="flex flex-col items-center justify-center gap-1 rounded-xl bg-white py-2 font-semibold text-purple-700 hover:bg-purple-200">
+                    class="flex flex-col items-center justify-center gap-1 rounded-xl max-w-[300px] w-[300px] bg-white py-2 font-semibold text-purple-700 hover:bg-purple-200">
                     <i class="bi bi-wallet h-5 w-5"></i>
                     Top Up
                 </div>
 
                 <div @click="NProgress.start(); window.location = '/transfer'; NProgress.done();"
-                    class="flex flex-col items-center justify-center gap-1 rounded-xl bg-white py-2 font-semibold text-purple-700 hover:bg-purple-200">
+                    class="flex flex-col items-center justify-center gap-1 rounded-xl max-w-[300px] w-[300px] bg-white py-2 font-semibold text-purple-700 hover:bg-purple-200">
                     <i class="bi bi-send h-5 w-5"></i>
                     Transfer
                 </div>
@@ -152,7 +152,7 @@ new #[Layout('components.layouts.homepage')] class extends Component {
         </div>
     </section>
 
-    <!-- <section class="mt-6 px-4">
+    <section class="mt-6 px-4">
         <div class="flex justify-center">
             <div class="grid grid-cols-2 gap-6 text-center text-sm text-gray-700">
                 <div @click="NProgress.start(); window.location = '/pulsa'; NProgress.done();"
@@ -170,7 +170,7 @@ new #[Layout('components.layouts.homepage')] class extends Component {
 
             </div>
         </div>
-    </section> -->
+    </section>
 
     <section class="mt-8 px-4">
         <div class="mx-auto max-w-6xl">

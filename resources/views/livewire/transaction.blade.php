@@ -5,15 +5,18 @@ use Livewire\Attributes\Layout;
 use App\Models\Topup;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Transfer;
+use App\Models\Transaction;
 
 new #[Layout('components.layouts.homepage')] class extends Component {
     public $topups;
     public $transfer;
+    public $transaction;
 
     public function mount()
     {
         $this->getTopUp();
         $this->getTransfer();
+        $this->getTransaction();
     }
 
     public function getTopUp()
@@ -27,7 +30,17 @@ new #[Layout('components.layouts.homepage')] class extends Component {
     }
     public function getTransfer()
     {
-        $this->transfer = Transfer::with(['sender', 'bank'])
+        $this->transfer = Transaction::with(['user', 'product'])
+            ->where('status', '!=', 'waiting')
+            ->orderByRaw("FIELD(status, 'pending', 'approved', 'rejected')")
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->toArray();
+    }
+
+    public function getTransaction()
+    {
+        $this->transaction = Transaction::with(['user', 'product'])
             ->where('status', '!=', 'waiting')
             ->orderByRaw("FIELD(status, 'pending', 'approved', 'failed')")
             ->orderBy('created_at', 'desc')
@@ -68,12 +81,6 @@ new #[Layout('components.layouts.homepage')] class extends Component {
                     <p class="font-bold text-blue-500">Pembelian</p>
                 </div>
             </div>
-        </div>
-
-        <!-- Summary -->
-        <div class="mb-6 rounded-xl bg-white/10 p-4">
-            <p class="text-sm">You’ve spent <span class="font-bold">$1,547</span> on expenses over the past 2 months</p>
-            <!-- <a href="#" class="mt-2 inline-block text-xs underline">View statistics →</a> -->
         </div>
 
         <!-- Expenses -->
@@ -143,6 +150,32 @@ new #[Layout('components.layouts.homepage')] class extends Component {
                 </div>
             </div>
         </template>
+
+        <template x-if="page == 3">
+            <div class="animate-fade rounded-3xl bg-white p-5 text-black">
+                <h2 class="text-md mb-4 font-semibold">Top Up Sebelumnya</h2>
+                <div class="flex max-h-[600px] flex-col gap-y-3 space-y-4 overflow-auto">
+                    <template x-for="(item, index) in transaction" :key="index">
+                        <div class="flex cursor-pointer items-center justify-between rounded-xl p-3 hover:bg-gray-200"
+                            @click="goToTransaction(item.id)">
+                            <div class="flex items-center gap-3">
+                                <p  class="text-gray-500" x-text="item.type"></p>
+                                <div>
+                                    <p class="text-sm font-semibold">Rp <span
+                                            x-text="formatRupiah(Number(item.prize))"></span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="text-sm font-semibold text-gray-500" x-text="item.status"></div>
+                        </div>
+                    </template>
+                    <template x-if="!transaction">
+                        <p class="text-sm text-gray-500">No transactions found.</p>
+                    </template>
+                </div>
+            </div>
+        </template>
+        
     </div>
 </div>
 <script>
@@ -151,9 +184,9 @@ new #[Layout('components.layouts.homepage')] class extends Component {
             page: 1,
             topups: @entangle('topups').live,
             transfer: @entangle('transfer').live,
+            transaction: @entangle('transaction').live,
             init() {
-                console.log(this.topups);
-                console.log(this.transfer);
+                console.log(this.transaction);
             },
             formatRupiah(angka) {
                 return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -161,6 +194,11 @@ new #[Layout('components.layouts.homepage')] class extends Component {
             goTopUp(id) {
                 NProgress.start();
                 window.location = '/topup/' + id;
+                NProgress.done();
+            },
+            goToTransaction(id) {
+                NProgress.start();
+                window.location = '/transaction/' + id;
                 NProgress.done();
             },
             goTransfer(id) {
