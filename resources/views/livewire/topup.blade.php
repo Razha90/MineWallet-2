@@ -84,7 +84,7 @@ new #[Layout('components.layouts.homepage')] class extends Component {
             <div class="mt-1 text-sm text-gray-500">
                 Saldo Aktif:
                 <span class="font-semibold text-purple-600">Rp
-                    {{ number_format(auth()->user()->balance, 0, ',', '.') }}</span>
+                    {{ number_format(auth()->user()->saldo, 0, ',', '.') }}</span>
             </div>
         </div>
 
@@ -186,16 +186,16 @@ new #[Layout('components.layouts.homepage')] class extends Component {
             async sendTopup() {
                 this.loading = true;
                 if (this.nom < 10000) {
-                    this.$dispatch('failed', {
+                    this.$dispatch('failed', [{
                         message: 'Minimal Top Up Rp 10.000'
-                    })
+                    }])
                     this.loading = false;
                     return;
                 }
                 if (this.bankId.length > 0) {
-                    this.$dispatch('failed', {
+                    this.$dispatch('failed', [{
                         message: 'Pilih Metode Pembayaran'
-                    })
+                    }])
                     this.loading = false;
                     return;
                 }

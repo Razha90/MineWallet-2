@@ -142,11 +142,6 @@ new #[Layout('components.layouts.homepage')] class extends Component {
                     Top Up
                 </div>
 
-                <div
-                    class="flex flex-col items-center justify-center gap-1 rounded-xl bg-white py-2 font-semibold text-purple-700 hover:bg-purple-200">
-                    <i class="bi bi-upc-scan h-5 w-5"></i>
-                    Scan
-                </div>
                 <div @click="NProgress.start(); window.location = '/transfer'; NProgress.done();"
                     class="flex flex-col items-center justify-center gap-1 rounded-xl bg-white py-2 font-semibold text-purple-700 hover:bg-purple-200">
                     <i class="bi bi-send h-5 w-5"></i>
@@ -157,10 +152,9 @@ new #[Layout('components.layouts.homepage')] class extends Component {
         </div>
     </section>
 
-    <section class="mt-6 px-4">
+    <!-- <section class="mt-6 px-4">
         <div class="flex justify-center">
             <div class="grid grid-cols-2 gap-6 text-center text-sm text-gray-700">
-                <!-- Jual Pulsa -->
                 <div @click="NProgress.start(); window.location = '/pulsa'; NProgress.done();"
                     class="block rounded-xl p-3 text-center transition hover:bg-purple-100">
                     <i class="bi bi-phone-fill mb-2 text-3xl text-purple-600"></i>
@@ -168,7 +162,6 @@ new #[Layout('components.layouts.homepage')] class extends Component {
                 </div>
 
 
-                <!-- PLN -->
                 <div @click="NProgress.start(); window.location = '/pln'; NProgress.done();"
                     class="block rounded-xl p-3 text-center transition hover:bg-purple-100">
                     <i class="bi bi-lightning-charge-fill mb-2 text-3xl text-yellow-500"></i>
@@ -177,7 +170,7 @@ new #[Layout('components.layouts.homepage')] class extends Component {
 
             </div>
         </div>
-    </section>
+    </section> -->
 
     <section class="mt-8 px-4">
         <div class="mx-auto max-w-6xl">

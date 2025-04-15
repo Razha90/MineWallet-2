@@ -5,6 +5,7 @@ use Livewire\Attributes\Layout;
 use App\Models\Bank;
 use App\Models\TopUp;
 use App\Models\ProductMerchant;
+use App\Models\Transaction;
 
 new #[Layout('components.layouts.homepage')] class extends Component {
     public $pulsa = [];
@@ -13,40 +14,30 @@ new #[Layout('components.layouts.homepage')] class extends Component {
         $this->pulsa = ProductMerchant::where('type', 'pulsa')->get()->toArray();
     }
 
-    public function sendTopup($nom, $bankId)
+    public function sendTopup($nom, $id)
     {
         try {
-            if ($nom <= 9999) {
+            if ($nom > auth()->user()->saldo) {
                 $this->dispatch('failed', [
-                    'message' => 'Minimal Top Up Rp 10.000',
-                ]);
-                return;
-            }
-            if (empty($bankId)) {
-                $this->dispatch('failed', [
-                    'message' => 'Pilih Metode Pembayaran',
-                ]);
-                return;
-            }
-            $bank = Bank::find($bankId);
-            if (!$bank) {
-                $this->dispatch('failed', [
-                    'message' => 'Bank tidak ditemukan',
+                    'message' => 'Saldo Kamu Kurang, untuk melakukan Transaksi.',
                 ]);
                 return;
             }
 
-            do {
-                $kodeUnik = random_int(1, 500);
-                $amountFinal = $kodeUnik + 1000;
-                $isExist = TopUp::where('amount', $amountFinal)->where('status', 'pending')->exists();
-            } while ($isExist);
+            if (empty($id)) {
+                $this->dispatch('failed', [
+                    'message' => 'Pilih Metode Pembayaran Provider Layanan',
+                ]);
+                return;
+            }
 
-            $topup = TopUp::create([
+            $product = Transaction::create([
                 'user_id' => auth()->user()->id,
-                'bank_id' => $bankId,
-                'amount' => $nom,
-                'admin' => $amountFinal,
+                'product_id' => $id,
+                'type' => 'pulsa',
+                'sub_type' => $this->pulsa[$id]['sub_type'],
+                'service_name' => $this->pulsa[$id]['name'],
+                'prize' => $nom,
             ]);
 
             return redirect()->route('payment.detail-payment', ['id' => $topup->id]);
@@ -82,24 +73,22 @@ new #[Layout('components.layouts.homepage')] class extends Component {
             <div class="mt-1 text-sm text-gray-500">
                 Saldo Aktif:
                 <span class="font-semibold text-purple-600">Rp
-                    {{ number_format(auth()->user()->balance, 0, ',', '.') }}</span>
+                    {{ number_format(auth()->user()->saldo, 0, ',', '.') }}</span>
             </div>
         </div>
 
         <div class="mt-5 select-none">
             <h3>Pilih Layanan Pulsa</h3>
-            <div class="flex flex-wrap flex-row gap-3">
+            <div class="flex flex-row flex-wrap gap-3">
                 <template x-if="pulsas.length != 0">
-                    <template x-for="(pulsa, index) in pulsas" :key="index">
+                    <template x-for="(pulsa, index) in objectType" :key="index">
                         <div class="cursor-pointer rounded-full border px-3 py-2 transition-all hover:bg-blue-200/50"
                             :class="{
-                                'border-blue-500 font-bold bg-blue-300/20': bankId == bank
-                                    .id,
-                                'border-gray-300 bg-white': bankId != bank.id
+                                'border-blue-500 font-bold bg-blue-300/20': pulsa == type,
+                                'border-gray-300 bg-white': pulsa != type
                             }"
-                            @click="type=pulsa.sub_type">
-                            <p x-text="capitalizeEachWord(pulsa.sub_type)"></p>
-
+                            @click="type=pulsa">
+                            <p x-text="capitalizeEachWord(pulsa)"></p>
                         </div>
                     </template>
                 </template>
@@ -108,25 +97,33 @@ new #[Layout('components.layouts.homepage')] class extends Component {
 
         <!-- Instant Nominal -->
         <div class="mt-5 select-none">
-            <p class="mb-2 text-sm font-medium">Instant</p>
+            <template x-if="type.length > 0">
+                <p class="mb-2 text-sm font-medium" x-text="capitalizeEachWord(type)"></p>
+            </template>
+            <template x-if="type.length == 0">
+                <p class="mb-2 text-sm font-medium">Pilih Layanan Provider</p>
+            </template>
             <div class="grid grid-cols-3 gap-2">
-                <template x-for="(amount, index) in amounts">
-                    <button type="button" @click="nom = amount" class="cursor-pointer border-2 transition-all"
-                        :class="{
-                            'bg-purple-100 border-purple-400 text-purple-700 rounded-full font-semibold': nom ==
-                                amount,
-                            'border-gray-300 hover:bg-purple-50 rounded-full border px-3 py-2 text-center text-sm transition': nom !=
-                                amount
-                        }">
-                        <span x-text="formatRupiah(amount)"></span>
-                    </button>
+                <template x-for="(pulsa, index) in pulsas" :key="index">
+                    <template x-if="pulsa.sub_type == type">
+                        <button type="button" @click="nom = pulsa.price"
+                            class="flex cursor-pointer flex-col items-center justify-center border-2 transition-all"
+                            :class="{
+                                'bg-purple-100 border-purple-400 text-purple-700 rounded-full font-semibold': nom ==
+                                    pulsa.name,
+                                'border-gray-300 hover:bg-purple-50 rounded-full border px-3 py-2 text-center text-sm transition': nom !=
+                                    pulsa.name
+                            }">
+                            <span class="text-2xl" x-text="pulsa.name"></span>
+                            <p class="text-gray-400 text-sm">Rp. <span
+                                    x-text="formatRupiah(pulsa.price)"></span></p>
+                        </button>
+                    </template>
                 </template>
             </div>
         </div>
 
-
-
-        <button type="button" @click="sendTopup" :disabled="loading || bankId.length == 0 || parseInt(nom) < 10000"
+        <button type="button" @click="sendTopup"
             class="mt-5 w-full cursor-pointer rounded-full border-2 border-purple-600 bg-purple-600 py-3 text-sm font-semibold text-white transition hover:bg-white hover:font-bold hover:text-purple-600 disabled:cursor-not-allowed disabled:border-blue-500 disabled:bg-white disabled:text-blue-500 disabled:opacity-50">
             Check Out
         </button>
@@ -141,29 +138,36 @@ new #[Layout('components.layouts.homepage')] class extends Component {
             pulsas: @entangle('pulsa').live,
             stopInit: false,
             type: "",
+            objectType: [],
+            chosePulsa: "",
+            saldo: "{{ auth()->user()->saldo }}",
             capitalizeEachWord(text) {
                 return text.split(' ')
                     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                     .join(' ');
             },
+            getUniqueSubTypes(pulsas) {
+                const subTypes = pulsas.map(item => item.sub_type);
+                const uniqueSubTypes = [...new Set(subTypes)];
+                return uniqueSubTypes;
+            },
+            removeDots(text) {
+                return text.replace(/\./g, '');
+            },
             async sendTopup() {
-                this.loading = true;
-                if (this.nom < 10000) {
-                    this.$dispatch('failed', {
-                        message: 'Minimal Top Up Rp 10.000'
-                    })
-                    this.loading = false;
+                if (this.nom > this.saldo) {
+                    this.$dispatch('failed', [{
+                        message: 'Saldo Kamu Kurang, untuk melakukan Transaksi.'
+                    }])
                     return;
                 }
-                if (this.bankId.length > 0) {
-                    this.$dispatch('failed', {
-                        message: 'Pilih Metode Pembayaran'
-                    })
-                    this.loading = false;
+                if (this.type.length == 0) {
+                    this.$dispatch('failed', [{
+                        message: 'Pilih Metode Pembayaran Provider Layanan'
+                    }])
                     return;
                 }
-                await this.$wire.sendTopup(this.nom, this.bankId);
-                this.loading = false;
+                // await this.$wire.sendTopup(this.nom, this.bankId);
                 return;
             },
             pisahBanks(data) {
@@ -183,11 +187,10 @@ new #[Layout('components.layouts.homepage')] class extends Component {
             init() {
                 if (this.stopInit) return;
                 this.stopInit = true;
-                this.objectBanks = this.pisahBanks(this.banks);
-                this.$watch('banks', value => {
-                    this.objectBanks = this.pisahBanks(value);
+                this.objectType = this.getUniqueSubTypes(this.pulsas);
+                this.$watch('type', (value) => {
+
                 });
-                console.log(this.objectBanks);
             },
             amounts: [10000, 20000, 25000, 50000, 100000, 500000, 1000000, 2000000],
             nom: 0,
